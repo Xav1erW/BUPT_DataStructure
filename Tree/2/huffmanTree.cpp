@@ -21,7 +21,6 @@ huffmanTree::huffmanTree(string str)
 {
     text = str;
     createFreqTable(str);
-    cout << "freqTable created" << endl;
     priority_queue<node*, vector<node*>, cmp> sortedStr;
     for (char ch = 0; ch < 127; ch++)
     {
@@ -32,7 +31,6 @@ huffmanTree::huffmanTree(string str)
             sortedStr.emplace(add);
         }
     }
-    cout << "queue created" << endl;
 
 
     while (!sortedStr.empty())
@@ -51,7 +49,6 @@ huffmanTree::huffmanTree(string str)
             sortedStr.emplace(subroot);
         }
     }
-    cout << "tree constructed" << endl;
     const node* temp = root;
     generateTable(temp);
 }
@@ -77,7 +74,6 @@ void huffmanTree::generateTable(const node *r, string binCode)
             encodeMap.emplace(r->ch, binCode);
             decodeMap.emplace(binCode, r->ch);
             return;
-            cout << "yezi" << endl;
         }
         else            //遍历左右子树
         {
@@ -125,12 +121,12 @@ void huffmanTree::encode(string address)
     // header.codeMapLength = encodeMap.size();
     for (auto it = decodeMap.begin(); it != decodeMap.end(); it++)
     {
-        header.tableSize += it->first.length();
+        header.tableSize += it->first.length() + 1;
         file.write(it->first.c_str(), it->first.length());
         file << it->second;
     }
 
-    string code;
+    string code = "";
     for (char ch : text)
     {
         code += encodeMap[ch];
@@ -149,6 +145,7 @@ void huffmanTree::encode(string address)
             // cout << "buffer full" << endl;
         // }
     }
+    cout << "code:" << code << endl;
     //按字节写入文件
     uint8_t byteBuffer = 0;
     int counter = 0;            //记录写入的bit数
@@ -158,14 +155,14 @@ void huffmanTree::encode(string address)
         {
             file.write((char *)&byteBuffer, 1);
             byteBuffer = 0;
-            byteBuffer << 1;
+            byteBuffer <<= 1;
             byteBuffer += bit - '0';
             counter++;
             header.dataSize++;
         }
         else
         {
-            byteBuffer << 1;
+            byteBuffer <<= 1;
             byteBuffer += bit - '0';
             counter++;
         }
@@ -174,39 +171,38 @@ void huffmanTree::encode(string address)
 
     //不足一个字节的bit数
     header.remainedBits = code.length() % 8;
-    uint8_t byteBuffer = 0;
-    cout << code.length() << endl;
-    //保存最后未存满一个buffer的数据
-    int counter = 0;
-    for (auto it = code.begin(); it != code.end() - header.remainedBits; it++)
-    {
-        //按字节写入文件
-        if (counter%8 == 0 && counter!= 0)
-        {
-            file.write((char *)&byteBuffer, 1);
-            byteBuffer = 0;
-            byteBuffer << 1;
-            byteBuffer += *it - '0';
-            counter++;
-            header.dataSize ++;
-        }
-        else
-        {
-            byteBuffer << 1;
-            byteBuffer += *it - '0';
-            counter++;
-        }
-    }
-    //写入剩余的buffer内容
-    file.write((char *)&byteBuffer, 1);
-    header.dataSize++;
 
-    byteBuffer = 0;
-    for (auto it = code.end() - header.remainedBits; it != code.end(); it++)
-    {
-        byteBuffer << 1;
-        byteBuffer += *it;
-    }
+    // //保存最后未存满一个buffer的数据
+    // int counter = 0;
+    // for (auto it = code.begin(); it != code.end() - header.remainedBits; it++)
+    // {
+    //     //按字节写入文件
+    //     if (counter%8 == 0 && counter!= 0)
+    //     {
+    //         file.write((char *)&byteBuffer, 1);
+    //         byteBuffer = 0;
+    //         byteBuffer << 1;
+    //         byteBuffer += *it - '0';
+    //         counter++;
+    //         header.dataSize ++;
+    //     }
+    //     else
+    //     {
+    //         byteBuffer << 1;
+    //         byteBuffer += *it - '0';
+    //         counter++;
+    //     }
+    // }
+    // //写入剩余的buffer内容
+    // file.write((char *)&byteBuffer, 1);
+    // header.dataSize++;
+
+    // byteBuffer = 0;
+    // for (auto it = code.end() - header.remainedBits; it != code.end(); it++)
+    // {
+    //     byteBuffer << 1;
+    //     byteBuffer += *it;
+    // }
     //写入不足八位的编码
     file.write((char *)&byteBuffer, 1);
     header.dataSize++;
@@ -214,9 +210,7 @@ void huffmanTree::encode(string address)
 
     //写入文件头
     file.seekp(0);
-    cout << header.remainedBits << "\t" << header.tableSize << endl;
     file.write((char*)&header, sizeof(header));
-    cout << "dataSize: " << header.dataSize<<endl;
 }
 
 
@@ -294,8 +288,8 @@ void decode(string in, string out)
         {
             byte = dataIn[i];
             i++;
-            char bitByChar = byte&&mask + '0';   //用字符‘0’‘1’存储单个bit
-            byte << 1;
+            char bitByChar = ((byte&mask) >> 7) + '0';   //用字符‘0’‘1’存储单个bit
+            byte <<= 1;
             bitCount ++;
             code.push_back(bitByChar);
             if(decodeMap.find(code) != decodeMap.end())      //在hash表中找到存在的对应字符
@@ -306,8 +300,8 @@ void decode(string in, string out)
         }
         else
         {
-            char bitByChar = byte&&mask + '0';   //用字符‘0’‘1’存储单个bit
-            byte << 1;
+            char bitByChar = ((byte&mask) >> 7) + '0';   //用字符‘0’‘1’存储单个bit
+            byte <<= 1;
             bitCount ++;
             code.push_back(bitByChar);
             if(decodeMap.find(code) != decodeMap.end())     //在hash表中找到存在的对应字符
@@ -323,8 +317,8 @@ void decode(string in, string out)
     bitCount = 8-header.remainedBits;
     while(bitCount != 8)
     {
-        char bitByChar = byte&&mask+'0';
-        byte << 1;
+        char bitByChar = ((byte&mask) >> 7)+'0';
+        byte <<= 1;
         bitCount++;
         code.push_back(bitByChar);
         if(decodeMap.find(code) != decodeMap.end())     //在hash表中找到存在的对应字符
@@ -426,5 +420,6 @@ void decode(string in, string out)
         // }
     
     delete[] dataIn;
+    cout << outputText << endl;
     fileOut << outputText;
 }

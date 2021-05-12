@@ -260,20 +260,7 @@ void decode(string in, string out)
         }
     }
     //读取不足一字节的数据
-    byte <<= (8-header.remainedBits);
-    bitCount = 8-header.remainedBits;
-    while(bitCount != 8)
-    {
-        char bitByChar = ((byte&mask) >> 7)+'0';
-        byte <<= 1;
-        bitCount++;
-        code.push_back(bitByChar);
-        if(decodeMap.find(code) != decodeMap.end())     //在hash表中找到存在的对应字符
-        {
-            outputText.push_back(decodeMap[code]);
-            code = "";              //code置零，读取下一个编码准备
-        }
-    }
+    
     
     delete[] dataIn;
     cout << outputText << endl;

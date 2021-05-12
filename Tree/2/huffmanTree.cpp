@@ -2,11 +2,12 @@
 
 void huffmanTree::createFreqTable(string str)
 {
-    freqTable = new unsigned int[128];
-    for (char ch : str)
+    freqTable = new unsigned int[256];
+    for (unsigned char ch : str)
     {
         freqTable[ch]++;
     }
+    cout << "freqTable constructed" << endl;
 }
 
 struct cmp
@@ -20,18 +21,29 @@ struct cmp
 huffmanTree::huffmanTree(string str)
 {
     text = str;
+    ofstream temp111;
+    temp111.open("strCopyTest.text", ios::binary);
+    temp111.write(text.c_str(), text.length());
+    temp111.close();
     createFreqTable(str);
     priority_queue<node*, vector<node*>, cmp> sortedStr;
-    for (char ch = 0; ch < 127; ch++)
+    cout << "back" << endl;
+    for (unsigned char ch = 0; ch < 255; ch++)
     {
         if (freqTable[ch] != 0)
         {
-            ch_count++;
+            cout << (int ) ch << endl;
+            // ch_count++;
             node* add = new node(ch, freqTable[ch]);
             sortedStr.emplace(add);
         }
     }
-
+    if (freqTable[255] != 0)
+        {
+            node* add = new node(255, freqTable[255]);
+            sortedStr.emplace(add);
+        }
+    cout << "queue created" << endl;
 
     while (!sortedStr.empty())
     {
@@ -41,7 +53,7 @@ huffmanTree::huffmanTree(string str)
         sortedStr.pop();
         if (sortedStr.empty())              //队列空，没有剩余节点，直接创建最后的根节点
         {
-            root = new node(-1, lchild->freq + rchild->freq, lchild, rchild);
+            root = new node(0, lchild->freq + rchild->freq, lchild, rchild);
         }
         else                                //最大两节点的次root节点
         {
@@ -49,6 +61,7 @@ huffmanTree::huffmanTree(string str)
             sortedStr.emplace(subroot);
         }
     }
+    cout << "tree created" << endl;
     const node* temp = root;
     generateTable(temp);
 }
@@ -60,7 +73,10 @@ huffmanTree::huffmanTree(ifstream& file)
     file.seekg(0);                  //位置置零
     char* data = new char[bytes];
     file.read(data, bytes);
-    new (this)huffmanTree(data);
+    string text(data, bytes);
+    
+    delete[] data;
+    new (this)huffmanTree(text);
 }
 
 void huffmanTree::generateTable(const node *r, string binCode)
@@ -99,7 +115,7 @@ void huffmanTree::showEncoded()
         throw("Text is too long. Please save in a file.\n");
     }
     string result;
-    for(char ch:text)
+    for(unsigned char ch:text)
     {
         result += encodeMap[ch];
     }
@@ -122,7 +138,7 @@ void huffmanTree::encode(string address)
     }
 
     string code = "";
-    for (char ch : text)
+    for (unsigned char ch : text)
     {
         code += encodeMap[ch];
     }
@@ -184,7 +200,7 @@ void decode(string in, string out)
     ifstream fileIn;
     ofstream fileOut;
     fileIn.open(in, ios::binary);
-    fileOut.open(out);
+    fileOut.open(out, ios::binary);
 
     //读取文件头和编码表
     huffmanHead header;
@@ -197,11 +213,11 @@ void decode(string in, string out)
 
     //构造hash编码表
     //文件中编码表 char + code + '\0'
-    unordered_map<string, char> decodeMap;
+    unordered_map<string, unsigned char> decodeMap;
     string code;
     bool isChar = true;         //如果读到'\0'表示下一个是字符，转为true，其余时间为false，默认为true，因为编码表开头是字符
-    char value;
-    for(char ch:codeTable)
+    unsigned char value;
+    for(unsigned char ch:codeTable)
     {
         if(isChar)
         {
@@ -236,7 +252,7 @@ void decode(string in, string out)
             byte = dataIn[i];
             i++;
             if(i == header.dataSize) break;     //读到最后一字节，直接跳出循环单独处理
-            char bitByChar = ((byte&mask) >> 7) + '0';   //用字符‘0’‘1’存储单个bit
+            unsigned char bitByChar = ((byte&mask) >> 7) + '0';   //用字符‘0’‘1’存储单个bit
             byte <<= 1;
             bitCount ++;
             code.push_back(bitByChar);
@@ -248,7 +264,7 @@ void decode(string in, string out)
         }
         else
         {
-            char bitByChar = ((byte&mask) >> 7) + '0';   //用字符‘0’‘1’存储单个bit
+            unsigned char bitByChar = ((byte&mask) >> 7) + '0';   //用字符‘0’‘1’存储单个bit
             byte <<= 1;
             bitCount ++;
             code.push_back(bitByChar);
@@ -260,9 +276,22 @@ void decode(string in, string out)
         }
     }
     //读取不足一字节的数据
-    
+    byte <<= (8-header.remainedBits);
+    bitCount = 8-header.remainedBits;
+    while(bitCount != 8)
+    {
+        unsigned char bitByChar = ((byte&mask) >> 7)+'0';
+        byte <<= 1;
+        bitCount++;
+        code.push_back(bitByChar);
+        if(decodeMap.find(code) != decodeMap.end())     //在hash表中找到存在的对应字符
+        {
+            outputText.push_back(decodeMap[code]);
+            code = "";              //code置零，读取下一个编码准备
+        }
+    }
     
     delete[] dataIn;
-    cout << outputText << endl;
-    fileOut << outputText;
+    
+    fileOut.write(outputText.c_str(), outputText.length());
 }

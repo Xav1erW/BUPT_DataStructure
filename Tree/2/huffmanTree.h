@@ -8,7 +8,7 @@
 using namespace std;
 struct node
 {
-    char ch;
+    unsigned char ch;
     unsigned int freq;
     node* left;
     node* right;
@@ -27,10 +27,10 @@ class huffmanTree
 private:
     node* root;
     unsigned int* freqTable;
-    int ch_count;
+    // int ch_count;
     string text;
-    unordered_map<char, string> encodeMap;
-    unordered_map<string, char> decodeMap;
+    unordered_map<unsigned char, string> encodeMap;
+    unordered_map<string, unsigned char> decodeMap;
     void createFreqTable(string);
     void generateTable(const node *r, string binCode = "");
 

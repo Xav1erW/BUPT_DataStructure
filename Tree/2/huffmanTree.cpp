@@ -112,11 +112,13 @@ void huffmanTree::encode(string address)
     ofstream file(address, ios::binary);
     file.seekp(sizeof(huffmanHead));
     huffmanHead header;
+    //写入编码表，结构：char + code + '\0'，最后的'\0'作为标志
     for (auto it = decodeMap.begin(); it != decodeMap.end(); it++)
     {
-        header.tableSize += it->first.length() + 1;
-        file.write(it->first.c_str(), it->first.length());
+        header.tableSize += it->first.length() + 2;
         file << it->second;
+        file.write(it->first.c_str(), it->first.length());
+        file << '\0';
     }
 
     string code = "";
@@ -124,7 +126,6 @@ void huffmanTree::encode(string address)
     {
         code += encodeMap[ch];
     }
-    cout << "code:" << code << endl;
     //按字节写入文件
     uint8_t byteBuffer = 0;
     int counter = 0;            //记录写入的bit数
@@ -188,27 +189,34 @@ void decode(string in, string out)
     //读取文件头和编码表
     huffmanHead header;
     fileIn.read((char*)&header, sizeof(header));
-    string codeTable;
     char* temp = new char[header.tableSize];
     fileIn.read(temp, header.tableSize);
-    codeTable = temp;
+    string codeTable(temp, header.tableSize);
     delete[] temp;
 
-    cout << header.remainedBits << "\t" << header.tableSize << endl;
 
     //构造hash编码表
+    //文件中编码表 char + code + '\0'
     unordered_map<string, char> decodeMap;
     string code;
+    bool isChar = true;         //如果读到'\0'表示下一个是字符，转为true，其余时间为false，默认为true，因为编码表开头是字符
+    char value;
     for(char ch:codeTable)
     {
-        if(ch == '0' || ch == '1')
+        if(isChar)
         {
-            code.push_back(ch);
+            value = ch;
+            isChar = false;
+        }
+        else if(ch == '\0')
+        {
+            isChar = true;
+            decodeMap.emplace(code, value);
+            code = "";
         }
         else
         {
-            decodeMap.emplace(code, ch);
-            code = "";
+            code.push_back(ch);
         }
     }
 
@@ -221,12 +229,13 @@ void decode(string in, string out)
     int i = 0;
     int bitCount = 0;               //记录已经读取的bit数，每8位读取下一字节
     unsigned char byte = 0;
-    while (i != header.dataSize-1)             //逐个读取dataIn中的数据
+    while (i != header.dataSize)             //逐个读取dataIn中的数据
     {
         if(bitCount % 8 == 0)
         {
             byte = dataIn[i];
             i++;
+            if(i == header.dataSize) break;     //读到最后一字节，直接跳出循环单独处理
             char bitByChar = ((byte&mask) >> 7) + '0';   //用字符‘0’‘1’存储单个bit
             byte <<= 1;
             bitCount ++;
@@ -251,8 +260,7 @@ void decode(string in, string out)
         }
     }
     //读取不足一字节的数据
-    byte = dataIn[header.dataSize-1];
-    byte << 8-header.remainedBits;
+    byte <<= (8-header.remainedBits);
     bitCount = 8-header.remainedBits;
     while(bitCount != 8)
     {

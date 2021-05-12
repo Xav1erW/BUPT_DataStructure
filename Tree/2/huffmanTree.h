@@ -6,7 +6,6 @@
 #include <fstream>
 
 using namespace std;
-
 struct node
 {
     char ch;

@@ -21,28 +21,25 @@ struct cmp
 huffmanTree::huffmanTree(string str)
 {
     text = str;
-    ofstream temp111;
-    temp111.open("strCopyTest.text", ios::binary);
-    temp111.write(text.c_str(), text.length());
-    temp111.close();
+    // ofstream temp111;
+    // temp111.open("strCopyTest.text", ios::binary);
+    // temp111.write(text.c_str(), text.length());
+    // temp111.close();
     createFreqTable(str);
     priority_queue<node*, vector<node*>, cmp> sortedStr;
-    cout << "back" << endl;
     for (unsigned char ch = 0; ch < 255; ch++)
     {
         if (freqTable[ch] != 0)
         {
-            cout << (int ) ch << endl;
-            // ch_count++;
             node* add = new node(ch, freqTable[ch]);
             sortedStr.emplace(add);
         }
     }
     if (freqTable[255] != 0)
-        {
-            node* add = new node(255, freqTable[255]);
-            sortedStr.emplace(add);
-        }
+    {
+        node* add = new node(255, freqTable[255]);
+        sortedStr.emplace(add);
+    }
     cout << "queue created" << endl;
 
     while (!sortedStr.empty())
@@ -186,13 +183,14 @@ void huffmanTree::decode(string code)
     {
         charCode.push_back(bit);
         //如果找到了对应的字符
-        if(char search = decodeMap.find(charCode) != decodeMap.end())
+        if(decodeMap.find(charCode) != decodeMap.end())
         {
+            unsigned char search = decodeMap[charCode];
             cout << search;
             charCode = "";
         }        
     }
-    cout << charCode << endl;
+    cout << endl;
 }
 
 void decode(string in, string out)
@@ -294,4 +292,24 @@ void decode(string in, string out)
     delete[] dataIn;
     
     fileOut.write(outputText.c_str(), outputText.length());
+}
+
+huffmanTree::~huffmanTree()
+{
+    delete[] freqTable;
+    deleteNodes(root);
+}
+
+void huffmanTree::deleteNodes(node* n)
+{
+    if(n == nullptr)
+    {
+        return;
+    }
+    else
+    {
+        deleteNodes(n->left);
+        deleteNodes(n->right);
+        delete n;
+    }
 }

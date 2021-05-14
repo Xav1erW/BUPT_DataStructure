@@ -27,13 +27,12 @@ class huffmanTree
 private:
     node* root;
     unsigned int* freqTable;
-    // int ch_count;
     string text;
     unordered_map<unsigned char, string> encodeMap;
     unordered_map<string, unsigned char> decodeMap;
     void createFreqTable(string);
     void generateTable(const node *r, string binCode = "");
-
+    void deleteNodes(node*);
 public:
     huffmanTree(string);            //从给定字符串构建huffmanTree
     huffmanTree(ifstream&);          //从文件构建huffmanTree
@@ -41,7 +40,7 @@ public:
     void showEncoded();             //打印编码结果
     void encode(string);            //编码string并存入文件
     void decode(string);            //根据类内的编码表解码传入的string，并打印结果
-    ~huffmanTree(){delete[] freqTable;}
+    ~huffmanTree();
 };
 void decode(string, string);        //打开编码文件并解码，将文本写入指定地址，两个string是数据和输出文件地址
 struct huffmanHead

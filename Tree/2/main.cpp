@@ -6,14 +6,28 @@ int main(int argc, char* argv[])
     if(argc == 1)
     {
         ifstream fileIn;
-        fileIn.open("Pic.bmp", ios::binary);
+        cout << "Please input the file name." << endl;
+        string fileName;
+        cin >> fileName;
+        fileIn.open(fileName, ios::binary);
         cout << "opened" << endl;
         huffmanTree test(fileIn);
         cout << "constructed" << endl;
+
+        cout << "Code Table: "<< endl;
         test.showTable();
-        test.encode("pic.compressed");
-        decode("pic.compressed", "pic.recovered");
+
+        cout << "Which file to save encoded file" << endl;
+        string encodedFile;
+        cin >> encodedFile;
+        test.encode(encodedFile);
+
+        cout << "Which file to decode" << endl;
+        string decodeFile;
+        cin >> decodeFile;
+        decode(decodeFile, decodeFile+".recovered");
     }
+    
     else
     {
         ifstream fileIn;

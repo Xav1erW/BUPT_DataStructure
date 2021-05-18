@@ -7,7 +7,6 @@ void huffmanTree::createFreqTable(string str)
     {
         freqTable[ch]++;
     }
-    cout << "freqTable constructed" << endl;
 }
 
 struct cmp
@@ -21,10 +20,6 @@ struct cmp
 huffmanTree::huffmanTree(string str)
 {
     text = str;
-    // ofstream temp111;
-    // temp111.open("strCopyTest.text", ios::binary);
-    // temp111.write(text.c_str(), text.length());
-    // temp111.close();
     createFreqTable(str);
     priority_queue<node*, vector<node*>, cmp> sortedStr;
     for (unsigned char ch = 0; ch < 255; ch++)
@@ -40,7 +35,6 @@ huffmanTree::huffmanTree(string str)
         node* add = new node(255, freqTable[255]);
         sortedStr.emplace(add);
     }
-    cout << "queue created" << endl;
 
     while (!sortedStr.empty())
     {
@@ -58,7 +52,6 @@ huffmanTree::huffmanTree(string str)
             sortedStr.emplace(subroot);
         }
     }
-    cout << "tree created" << endl;
     const node* temp = root;
     generateTable(temp);
 }
@@ -100,7 +93,7 @@ void huffmanTree::showTable()
 {
     for (auto it = encodeMap.begin(); it != encodeMap.end(); it++)
     {
-        cout << it->first << "\t" << it->second << endl;
+        cout << (int)it->first << "\t" << it->second << endl;
     }
 }
 

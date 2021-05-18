@@ -1,31 +1,60 @@
 #include "huffmanTree.h"
-
-
 int main(int argc, char* argv[])
 {
     if(argc == 1)
     {
-        ifstream fileIn;
-        cout << "Please input the file name." << endl;
-        string fileName;
-        cin >> fileName;
-        fileIn.open(fileName, ios::binary);
-        cout << "opened" << endl;
-        huffmanTree test(fileIn);
-        cout << "constructed" << endl;
+        cout << "From file or encode string?" <<endl;
+        cout << "[1] from file" << endl;
+        cout << "[2] encode string" << endl;
+        char in;
+        cin >> in;
+        if(in == '1')
+        {
+            ifstream fileIn;
+            cout << "Please input the file name." << endl;
+            string fileName;
+            cin >> fileName;
+            fileIn.open(fileName, ios::binary);
+            huffmanTree test(fileIn);
 
-        cout << "Code Table: "<< endl;
-        test.showTable();
+            cout << "Code Table: "<< endl;
+            test.showTable();
 
-        cout << "Which file to save encoded file" << endl;
-        string encodedFile;
-        cin >> encodedFile;
-        test.encode(encodedFile);
+            try
+            {
+                cout << "----------Encoded-----------" << endl;
+                test.showEncoded();
+            }
+            catch(const std::exception& e)
+            {
+                std::cerr << e.what() << '\n';
+            }
+            
+            cout << "Which file to save encoded file" << endl;
+            string encodedFile;
+            cin >> encodedFile;
+            test.encode(encodedFile);
 
-        cout << "Which file to decode" << endl;
-        string decodeFile;
-        cin >> decodeFile;
-        decode(decodeFile, decodeFile+".recovered");
+            cout << "Which file to decode" << endl;
+            string decodeFile;
+            cin >> decodeFile;
+            decode(decodeFile, decodeFile+".recovered");
+        }
+        else if(in == '2')
+        {
+            string text;
+            cout << "Please input string to encode" << endl;
+            getchar();
+            getline(cin, text);
+            huffmanTree test(text);
+
+            cout << "--------Code Table: ---------"<< endl;
+            test.showTable();
+
+            cout << "----------Encoded-----------" << endl;
+            test.showEncoded();
+            
+        }
     }
     
     else
